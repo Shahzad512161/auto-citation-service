@@ -2,16 +2,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, ExternalLink } from "lucide-react";
 import { Btn, Card, Field, inputCls, Modal, Badge } from "../../../components/ui";
-import { COUNTRIES, getDirectories, save, getCustomDirectories, uid } from "../../../lib/store";
+import { COUNTRIES, NICHE_CATEGORIES, getDirectories, save, getCustomDirectories, uid } from "../../../lib/store";
 
 export default function DirectoriesPage() {
   const [country, setCountry] = useState("USA");
+  const [niche, setNiche] = useState("All Niches");
   const [all, setAll] = useState([]);
   const [q, setQ] = useState("");
   const [minDa, setMinDa] = useState(0);
   const [type, setType] = useState("All");
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", website_url: "", add_url: "", country: "USA", da: "" });
+  const [form, setForm] = useState({ name: "", website_url: "", add_url: "", country: "USA", da: "", niche: "General" });
 
   useEffect(() => { setAll(getDirectories()); }, []);
   const counts = useMemo(() => {
@@ -23,6 +24,7 @@ export default function DirectoriesPage() {
   const rows = all.filter((d) => {
     if (country !== "Custom" && d.country !== country) return false;
     if (country === "Custom" && !d.is_custom) return false;
+    if (niche !== "All Niches" && (d.niche || "General") !== niche) return false;
     if (q && !d.name.toLowerCase().includes(q.toLowerCase()) && !(d.website_url || "").toLowerCase().includes(q.toLowerCase())) return false;
     if (minDa && (d.da || 0) < minDa) return false;
     if (type !== "All" && d.type !== type) return false;
@@ -32,11 +34,11 @@ export default function DirectoriesPage() {
   function addCustom(e) {
     e.preventDefault();
     if (!form.name || !form.website_url || !form.add_url) return;
-    const rec = { id: "custom-" + uid(), name: form.name, website_url: form.website_url, add_url: form.add_url, country: form.country, da: form.da ? Number(form.da) : null, type: "Free", is_custom: true, category: "Custom" };
+    const rec = { id: "custom-" + uid(), name: form.name, website_url: form.website_url, add_url: form.add_url, country: form.country, da: form.da ? Number(form.da) : null, type: "Free", is_custom: true, category: "Custom", niche: form.niche || "General" };
     save("cb_custom_directories", [...getCustomDirectories(), rec]);
     setAll(getDirectories());
     setShowAdd(false);
-    setForm({ name: "", website_url: "", add_url: "", country: "USA", da: "" });
+    setForm({ name: "", website_url: "", add_url: "", country: "USA", da: "", niche: "General" });
   }
 
   return (
@@ -63,10 +65,13 @@ export default function DirectoriesPage() {
           <Search size={16} className="absolute left-3 top-3 text-gray-400" />
           <input className={`${inputCls} pl-9`} placeholder="Search directories…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <select className={inputCls} style={{ width: 180 }} value={minDa} onChange={(e) => setMinDa(Number(e.target.value))}>
+        <select className={inputCls} style={{ width: 220 }} value={niche} onChange={(e) => setNiche(e.target.value)}>
+          {NICHE_CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+        </select>
+        <select className={inputCls} style={{ width: 150 }} value={minDa} onChange={(e) => setMinDa(Number(e.target.value))}>
           <option value={0}>Any DA</option><option value={30}>DA 30+</option><option value={50}>DA 50+</option><option value={70}>DA 70+</option><option value={90}>DA 90+</option>
         </select>
-        <select className={inputCls} style={{ width: 160 }} value={type} onChange={(e) => setType(e.target.value)}>
+        <select className={inputCls} style={{ width: 130 }} value={type} onChange={(e) => setType(e.target.value)}>
           <option>All</option><option>Free</option><option>Paid</option>
         </select>
       </Card>
@@ -106,8 +111,13 @@ export default function DirectoriesPage() {
                 {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
               </select>
             </Field>
-            <Field label="DA (optional)"><input className={inputCls} type="number" min="0" max="100" value={form.da} onChange={(e) => setForm({ ...form, da: e.target.value })} /></Field>
+            <Field label="Industry / Niche">
+              <select className={inputCls} value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })}>
+                {NICHE_CATEGORIES.filter((c) => c !== "All Niches").map((cat) => <option key={cat}>{cat}</option>)}
+              </select>
+            </Field>
           </div>
+          <Field label="DA (optional)"><input className={inputCls} type="number" min="0" max="100" value={form.da} onChange={(e) => setForm({ ...form, da: e.target.value })} /></Field>
           <Btn type="submit" className="w-full">Save custom directory</Btn>
         </form>
       </Modal>

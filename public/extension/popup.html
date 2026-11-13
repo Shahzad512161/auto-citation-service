@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Citation Blaster</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 14px;
+      width: 320px;
+      background: #f9fafb;
+      color: #111827;
+      box-sizing: border-box;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 10px;
+    }
+    .badge {
+      background: #0F6FFF;
+      color: white;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-weight: bold;
+      font-size: 13px;
+    }
+    .biz-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    .biz-name {
+      font-size: 14px;
+      font-weight: bold;
+      margin: 0 0 4px 0;
+    }
+    .biz-sub {
+      font-size: 11px;
+      color: #6b7280;
+      margin: 0;
+    }
+    .btn-fill {
+      background: #0F6FFF;
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-fill:hover { background: #0056d6; }
+    .status {
+      margin-top: 8px;
+      font-size: 12px;
+      text-align: center;
+      min-height: 18px;
+      font-weight: 500;
+    }
+    .quick-copy {
+      margin-top: 12px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 8px;
+    }
+    .copy-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      padding: 4px 0;
+    }
+    .copy-btn {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-size: 10px;
+    }
+    .copy-btn:hover { background: #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="badge">CB</span>
+    <div>
+      <strong style="font-size: 13px;">Citation Blaster</strong>
+      <p style="margin: 0; font-size: 10px; color: #6b7280;">Directory Auto-Fill Extension</p>
+    </div>
+  </div>
+
+  <div class="biz-card">
+    <p class="biz-name" id="bName">No Business Synced</p>
+    <p class="biz-sub" id="bMeta">Open dashboard or paste data below</p>
+  </div>
+
+  <button class="btn-fill" id="btnFill">
+    ⚡ Auto-Fill This Directory
+  </button>
+  <div class="status" id="status"></div>
+
+  <div class="quick-copy">
+    <div style="font-weight: 600; font-size: 11px; margin-bottom: 4px; color: #374151;">Quick Copy Details:</div>
+    <div class="copy-row">
+      <span>Phone: <strong id="cpPhone">-</strong></span>
+      <button class="copy-btn" data-key="phone">Copy</button>
+    </div>
+    <div class="copy-row">
+      <span>Address: <strong id="cpAddr">-</strong></span>
+      <button class="copy-btn" data-key="address">Copy</button>
+    </div>
+    <div class="copy-row">
+      <span>Logo URL:</span>
+      <button class="copy-btn" data-key="logo_url">Copy Logo</button>
+    </div>
+    <div class="copy-row">
+      <span>Description:</span>
+      <button class="copy-btn" data-key="description">Copy Bio</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -140,8 +140,24 @@ export default function BlasterPage() {
         </p>
       </Card>
 
+      <Card className="p-5 border-blue-200 bg-blue-50/30">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 className="flex items-center gap-2 font-bold text-gray-900">
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-[#0F6FFF] text-white text-xs">EXT</span>
+              Prefer a Browser Extension over Bookmarklets?
+            </h2>
+            <p className="text-xs text-gray-600 mt-1">
+              Your project includes a complete Manifest V3 Chrome Extension in <code className="bg-white border px-1 rounded font-mono">public/extension</code> for 1-click form autofill.
+            </p>
+          </div>
+          <Btn variant="secondary" onClick={() => window.location.href = "/dashboard/settings"}>
+            View Extension Setup &rarr;
+          </Btn>
+        </div>
+      </Card>
+
       <Card className="p-5">
-        <h2 className="flex items-center gap-2 font-bold"><Bookmark size={18} /> Auto-fill bookmarklet (the “floating widget”, done properly)</h2>
         <p className="mt-2 text-sm text-gray-600">
           A page on another website cannot be filled from this app — browsers forbid it, which is why a bookmarklet is the honest mechanism.
           Pick a business above, then drag the button below to your bookmarks bar. On any directory form, click it and it fills name, phone, email, address, city, state, zip, country, website, description and category, then shows how many fields it filled. You always review and submit the form yourself.

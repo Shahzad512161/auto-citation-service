@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Zap, LayoutDashboard, Building2, Globe2, Rocket, BarChart3, CreditCard, Settings, LogOut, BadgeCheck } from "lucide-react";
+import { Zap, LayoutDashboard, Building2, Globe2, Rocket, BarChart3, CreditCard, Settings, LogOut, BadgeCheck, ScanSearch, TrendingUp } from "lucide-react";
 import { NavLink, Badge } from "../../components/ui";
 import { getUser, signOut, initials } from "../../lib/auth";
 import { syncFromFirestore } from "../../lib/store";
@@ -11,7 +11,9 @@ const NAV = [
   { href: "/dashboard/businesses", label: "My Businesses", icon: <Building2 size={18} /> },
   { href: "/dashboard/directories", label: "Directory Library", icon: <Globe2 size={18} /> },
   { href: "/dashboard/blaster", label: "Auto Blaster", icon: <Rocket size={18} /> },
-  { href: "/dashboard/reports", label: "Reports", icon: <BarChart3 size={18} /> },
+  { href: "/dashboard/audit", label: "Citation Audit (NAP)", icon: <ScanSearch size={18} /> },
+  { href: "/dashboard/rank-tracker", label: "3-Pack Rank Tracker", icon: <TrendingUp size={18} /> },
+  { href: "/dashboard/reports", label: "Reports & White-Label", icon: <BarChart3 size={18} /> },
   { href: "/dashboard/subscription", label: "Subscription", icon: <CreditCard size={18} /> },
   { href: "/dashboard/settings", label: "Settings", icon: <Settings size={18} /> },
 ];

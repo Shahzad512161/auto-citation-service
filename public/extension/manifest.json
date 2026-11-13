@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Global Citation Auto-Blaster",
+  "version": "1.1.0",
+  "description": "1-Click auto-fill for 1000+ local directory submission forms with photo and NAP consistency support.",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Citation Blaster Helper"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
