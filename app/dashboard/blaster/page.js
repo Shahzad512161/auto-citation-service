@@ -18,6 +18,8 @@ export default function BlasterPage() {
   const [copied, setCopied] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
   const [gateway, setGateway] = useState("unblock"); // "unblock" (No VPN needed via Cloud Gateway) | "direct"
+  const [stepperActive, setStepperActive] = useState(false);
+  const [stepperIndex, setStepperIndex] = useState(0);
   const stopRef = useRef(false);
 
   useEffect(() => {
@@ -41,6 +43,64 @@ export default function BlasterPage() {
     return rawUrl;
   }
 
+  function startStepper() {
+    if (!business) { alert("Select a business first."); return; }
+    if (selected.length === 0) { alert("Select at least one directory."); return; }
+    localStorage.setItem("blaster_business_data", JSON.stringify(business));
+    setStepperIndex(0);
+    setStepperActive(true);
+    setLog((l) => [...l, `⚡ Rapid Stepper started for ${selected.length} directories. Press Spacebar or click Open to launch each tab.`]);
+  }
+
+  function openNextStep() {
+    const chosen = dirs.filter((d) => selected.includes(d.id));
+    if (stepperIndex >= chosen.length) {
+      setStepperActive(false);
+      return;
+    }
+    const d = chosen[stepperIndex];
+    const target = formatOpenUrl(d.add_url);
+    window.open(target, "_blank");
+    const user = getUser();
+    const subs = getSubmissions();
+    subs.push({
+      id: uid(),
+      user_id: user?.id || "demo",
+      business_id: business.id,
+      business_name: business.name,
+      directory_id: d.id,
+      directory_name: d.name,
+      country,
+      date: new Date().toISOString(),
+      status: "pending",
+      live_url: "",
+    });
+    save("cb_submissions", subs);
+    const sub = getSubscription();
+    sub.listings_used = (sub.listings_used || 0) + 1;
+    save("cb_subscription", sub);
+    setLog((l) => [...l, `Opened (${stepperIndex + 1}/${chosen.length}): ${d.name} → ${d.add_url}`]);
+    if (stepperIndex + 1 >= chosen.length) {
+      setStepperActive(false);
+      setStepperIndex(0);
+      alert(`🎉 All ${chosen.length} directory tabs opened successfully!`);
+    } else {
+      setStepperIndex((idx) => idx + 1);
+    }
+  }
+
+  useEffect(() => {
+    if (!stepperActive) return;
+    function onKey(e) {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        openNextStep();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [stepperActive, stepperIndex, selected, dirs, business, gateway]);
+
   async function startBlast() {
     if (!business) { alert("Select a business first."); return; }
     if (selected.length === 0) { alert("Select at least one directory."); return; }
@@ -62,7 +122,7 @@ export default function BlasterPage() {
       chunk.forEach((d) => {
         const targetToOpen = formatOpenUrl(d.add_url);
         try {
-          const win = window.open(targetToOpen, "_blank", "noopener");
+          const win = window.open(targetToOpen, "_blank");
           if (!win || win.closed || typeof win.closed === "undefined") {
             blockedDetected = true;
           }
@@ -187,12 +247,59 @@ export default function BlasterPage() {
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Btn onClick={startBlast} disabled={running || !business || selected.length === 0} className="!px-6 !py-3 text-base">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Btn onClick={startBlast} disabled={running || stepperActive || !business || selected.length === 0} className="!px-6 !py-3 text-base shadow-sm">
             <Rocket size={18} /> START AUTO BLAST — Open {settings.tabs_at_once} Tabs at Once
           </Btn>
+          <button
+            type="button"
+            onClick={startStepper}
+            disabled={running || stepperActive || !business || selected.length === 0}
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-[#0F6FFF] bg-white px-5 py-3 text-sm font-extrabold text-[#0F6FFF] hover:bg-blue-50 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-xs"
+          >
+            ⚡ Rapid 1-Tap Stepper (Spacebar to Open Each)
+          </button>
           {running && <Btn variant="danger" onClick={() => { stopRef.current = true; }}>Stop</Btn>}
         </div>
+
+        {stepperActive && (
+          <div className="mt-4 rounded-2xl border-2 border-[#0F6FFF] bg-blue-50/50 p-5 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#0F6FFF] text-white text-xs font-bold">
+                    {stepperIndex + 1}
+                  </span>
+                  <h3 className="font-extrabold text-base text-gray-900">
+                    Rapid Stepper Active: Opening Tab {stepperIndex + 1} of {selected.length}
+                  </h3>
+                </div>
+                <p className="mt-1 text-sm font-semibold text-gray-700">
+                  Target: <span className="text-[#0F6FFF] font-bold">{dirs.filter((d) => selected.includes(d.id))[stepperIndex]?.name}</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 Tap your keyboard <kbd className="rounded bg-white border border-gray-300 px-1.5 py-0.5 font-mono text-gray-800 font-bold shadow-2xs">Spacebar</kbd> or <kbd className="rounded bg-white border border-gray-300 px-1.5 py-0.5 font-mono text-gray-800 font-bold shadow-2xs">Enter</kbd> to open each tab immediately (never blocked by browser)!
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={openNextStep}
+                  className="rounded-xl bg-[#0F6FFF] px-6 py-3 font-extrabold text-white shadow-md hover:bg-[#0d5ed6] active:scale-95 transition flex items-center gap-2 text-sm cursor-pointer"
+                >
+                  Open Tab &rarr; ({stepperIndex + 1}/{selected.length})
+                </button>
+                <Btn variant="secondary" onClick={() => setStepperActive(false)}>
+                  Done
+                </Btn>
+              </div>
+            </div>
+            <div className="mt-3">
+              <Progress value={stepperIndex + 1} total={selected.length} />
+            </div>
+          </div>
+        )}
 
         {popupBlocked && (
           <div className="mt-4 rounded-xl border-2 border-red-500 bg-red-50 p-4 text-sm text-red-900 shadow-md">
@@ -200,19 +307,24 @@ export default function BlasterPage() {
               <span className="text-3xl">🚫</span>
               <div className="space-y-2">
                 <h3 className="font-bold text-base text-red-800">
-                  Chrome Blocked Multiple Tabs from Opening!
+                  Why Chrome Blocked 9 of the 10 Tabs:
                 </h3>
                 <p className="text-sm text-red-700">
-                  By default, browsers only permit 1 pop-up tab per click to prevent spam. That is why only 1 tab opened.
+                  By default, Chrome allows <strong>only 1 new tab per button click</strong> to protect users from malicious popup spam. All subsequent tabs are stopped by Chrome&apos;s Pop-up Blocker.
                 </p>
                 <div className="rounded-lg bg-white p-3 border border-red-200">
-                  <p className="font-semibold text-xs text-gray-900 mb-1">To allow all {selected.length} tabs to open automatically:</p>
+                  <p className="font-semibold text-xs text-gray-900 mb-1">To allow all 10 tabs to open in 1 click:</p>
                   <ol className="list-decimal pl-5 space-y-1 text-xs text-gray-700">
-                    <li>Look at the <strong>far-right end of your Chrome address bar (URL bar)</strong> at the top of the browser.</li>
-                    <li>Click the <strong>Pop-up Blocked icon</strong> (a tiny window with a red &times; mark).</li>
+                    <li>Look at the <strong>far-right end of your Chrome address bar (URL bar)</strong> at the top of your screen.</li>
+                    <li>Click the <strong>Pop-up Blocked icon</strong> (tiny window with red &times; mark).</li>
                     <li>Select <strong>&ldquo;Always allow pop-ups and redirects from http://localhost:3000&rdquo;</strong>.</li>
-                    <li>Click <strong>Done</strong>, then click the blue <strong>START AUTO BLAST</strong> button again!</li>
+                    <li>Click <strong>Done</strong>, then click <strong>START AUTO BLAST</strong> again!</li>
                   </ol>
+                </div>
+                <div className="pt-1">
+                  <p className="text-xs font-semibold text-gray-800">
+                    Don&apos;t want to change browser settings? Use the <strong>&ldquo;⚡ Rapid 1-Tap Stepper&rdquo;</strong> button above and tap your Spacebar to open each tab in 1 second!
+                  </p>
                 </div>
               </div>
             </div>
