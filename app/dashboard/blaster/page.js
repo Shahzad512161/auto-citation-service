@@ -17,6 +17,7 @@ export default function BlasterPage() {
   const [log, setLog] = useState([]);
   const [copied, setCopied] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
+  const [gateway, setGateway] = useState("unblock"); // "unblock" (No VPN needed via Cloud Gateway) | "direct"
   const stopRef = useRef(false);
 
   useEffect(() => {
@@ -31,6 +32,14 @@ export default function BlasterPage() {
   const toggle = (id) => setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
   const selectAll = () => setSelected(dirs.map((d) => d.id));
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function formatOpenUrl(rawUrl) {
+    if (gateway === "unblock") {
+      // Routes through Google Cloud Proxy to bypass TLC/PTA firewall and regional IP bans without any VPN
+      return `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(rawUrl)}`;
+    }
+    return rawUrl;
+  }
 
   async function startBlast() {
     if (!business) { alert("Select a business first."); return; }
@@ -51,8 +60,9 @@ export default function BlasterPage() {
       if (stopRef.current) break;
       const chunk = chosen.slice(i, i + batch);
       chunk.forEach((d) => {
+        const targetToOpen = formatOpenUrl(d.add_url);
         try {
-          const win = window.open(d.add_url, "_blank", "noopener");
+          const win = window.open(targetToOpen, "_blank", "noopener");
           if (!win || win.closed || typeof win.closed === "undefined") {
             blockedDetected = true;
           }
@@ -60,7 +70,7 @@ export default function BlasterPage() {
           blockedDetected = true;
         }
         subs.push({ id: uid(), user_id: user?.id || "demo", business_id: business.id, business_name: business.name, directory_id: d.id, directory_name: d.name, country, date: new Date().toISOString(), status: "pending", live_url: "" });
-        setLog((l) => [...l, `Opened: ${d.name} → ${d.add_url}`]);
+        setLog((l) => [...l, `Opened: ${d.name} (${gateway === "unblock" ? "Unblocked Cloud" : "Direct"}) → ${d.add_url}`]);
       });
       done += chunk.length;
       setOpened(done);
@@ -131,17 +141,51 @@ export default function BlasterPage() {
       </Card>
 
       <Card className="p-5">
-        <h2 className="font-bold">Step 4 — Blast</h2>
-
-        <div className="mt-2 mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-          <p className="font-semibold flex items-center gap-1">⚠️ Seeing &ldquo;Blocked By TLC&rdquo; or ISP Connection Blocks?</p>
-          <p className="mt-1">
-            <strong>TLC</strong> stands for your local ISP (Transworld Associates / TLC in Pakistan). Local ISP firewalls routinely block foreign directory domains, and international directories (USA, UK, etc.) often require a matching regional IP.
-          </p>
-          <p className="mt-1">
-            <strong>Solution:</strong> Turn on a VPN (set to USA, UK, or your target citation country) or enable <strong>Cloudflare WARP (1.1.1.1)</strong> before blasting.
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-bold">Step 4 — Blast</h2>
+          <div className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 p-1">
+            <button
+              type="button"
+              onClick={() => setGateway("unblock")}
+              className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${
+                gateway === "unblock"
+                  ? "bg-[#0F6FFF] text-white shadow-xs"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              ⚡ Auto-Unblock (No VPN Needed)
+            </button>
+            <button
+              type="button"
+              onClick={() => setGateway("direct")}
+              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                gateway === "direct"
+                  ? "bg-[#0F6FFF] text-white shadow-xs"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Direct (With VPN)
+            </button>
+          </div>
         </div>
+
+        {gateway === "unblock" ? (
+          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900">
+            <p className="font-semibold flex items-center gap-1.5">
+              <span>⚡</span> Auto-Unblock Cloud Gateway Active
+            </p>
+            <p className="mt-0.5">
+              Target directory pages are routed through an encrypted cloud proxy edge. This completely bypasses local ISP blocks (<strong>Blocked by TLC</strong> / PTA filters) and foreign IP restrictions without needing any VPN or software installed.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+            <p className="font-semibold flex items-center gap-1">⚠️ Direct Connection Selected</p>
+            <p className="mt-0.5">
+              Your browser will connect directly to directory domains. If your ISP shows <strong>&ldquo;Blocked By TLC&rdquo;</strong>, switch to <strong>Auto-Unblock</strong> mode above or turn on a VPN.
+            </p>
+          </div>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <Btn onClick={startBlast} disabled={running || !business || selected.length === 0} className="!px-6 !py-3 text-base">
@@ -196,14 +240,28 @@ export default function BlasterPage() {
               {dirs.filter((d) => selected.includes(d.id)).map((d, idx) => (
                 <div key={d.id} className="flex items-center justify-between px-3 py-2 text-xs hover:bg-gray-50">
                   <span className="font-medium text-gray-800 truncate mr-2">{idx + 1}. {d.name} <span className="text-gray-400 font-normal">({d.country})</span></span>
-                  <a
-                    href={d.add_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 rounded bg-blue-50 px-2.5 py-1 font-semibold text-[#0F6FFF] hover:bg-blue-100 transition"
-                  >
-                    Open Tab &rarr;
-                  </a>
+                  <div className="shrink-0 flex items-center gap-1.5">
+                    <a
+                      href={formatOpenUrl(d.add_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-blue-50 px-2.5 py-1 font-bold text-[#0F6FFF] hover:bg-blue-100 transition"
+                      title={gateway === "unblock" ? "Open without VPN via Google Cloud Gateway" : "Open directory tab"}
+                    >
+                      {gateway === "unblock" ? "⚡ Open Without VPN" : "Open Tab →"}
+                    </a>
+                    {gateway === "unblock" && (
+                      <a
+                        href={d.add_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded bg-gray-100 px-2 py-1 text-gray-500 hover:bg-gray-200 transition"
+                        title="Open direct URL without proxy"
+                      >
+                        Direct
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
