@@ -1,21 +1,21 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { ShieldCheck, CheckCircle2, Clock, XCircle, ExternalLink, Download, Printer } from "lucide-react";
-import { Card, Badge, Btn } from "../../../components/ui";
-import { getBusinesses, getSubmissions, getAgencyBranding } from "../../../lib/store";
+import { Card, Badge, Btn, Skeleton } from "../../components/ui";
+import { getBusinesses, getSubmissions, getAgencyBranding } from "../../lib/store";
 
-export default function PublicClientReportPage() {
-  const params = useParams();
+function ReportViewer() {
+  const searchParams = useSearchParams();
   const [biz, setBiz] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [agency, setAgency] = useState(null);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    const bizId = params?.id;
+    const bizId = searchParams.get("id");
     const allBiz = getBusinesses();
-    const current = allBiz.find((b) => b.id === bizId) || allBiz[0];
+    const current = (bizId ? allBiz.find((b) => b.id === bizId) : null) || allBiz[0];
     setBiz(current);
 
     const allSubs = getSubmissions();
@@ -23,7 +23,7 @@ export default function PublicClientReportPage() {
     setSubmissions(bizSubs);
 
     setAgency(getAgencyBranding());
-  }, [params]);
+  }, [searchParams]);
 
   const liveCount = submissions.filter((s) => s.status === "live").length;
   const pendingCount = submissions.filter((s) => s.status === "pending").length;
@@ -192,5 +192,13 @@ export default function PublicClientReportPage() {
         </footer>
       </main>
     </div>
+  );
+}
+
+export default function PublicClientReportPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center text-sm text-gray-500">Loading report…</div>}>
+      <ReportViewer />
+    </Suspense>
   );
 }

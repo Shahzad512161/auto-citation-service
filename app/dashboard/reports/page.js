@@ -112,7 +112,7 @@ export default function ReportsPage() {
 
   function copyClientShareLink() {
     const firstBiz = businesses[0];
-    const url = `${window.location.origin}/report/${firstBiz?.id || "demo"}`;
+    const url = `${window.location.origin}/report?id=${firstBiz?.id || "all"}`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
