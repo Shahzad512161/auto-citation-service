@@ -38,8 +38,7 @@ export default function DashboardLayout({ children }) {
     return () => window.removeEventListener("cb-user-changed", onChange);
   }, [router]);
 
-  if (!ready) return <DashboardSkeleton />;
-  if (!user) return null;
+  if (!ready || !user) return <DashboardSkeleton />;
 
   return (
     <div className="flex min-h-screen bg-gray-50">

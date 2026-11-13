@@ -1,5 +1,5 @@
-import { DashboardSkeleton } from "../../components/ui";
+import { ContentSkeleton } from "../../components/ui";
 
-export default function Loading() {
-  return <DashboardSkeleton />;
+export default function DashboardLoading() {
+  return <ContentSkeleton />;
 }
