@@ -118,6 +118,17 @@ export default function BlasterPage() {
 
       <Card className="p-5">
         <h2 className="font-bold">Step 4 — Blast</h2>
+
+        <div className="mt-2 mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <p className="font-semibold flex items-center gap-1">⚠️ Seeing &ldquo;Blocked By TLC&rdquo; or ISP Connection Blocks?</p>
+          <p className="mt-1">
+            <strong>TLC</strong> stands for your local ISP (Transworld Associates / TLC in Pakistan). Local ISP firewalls routinely block foreign directory domains, and international directories (USA, UK, etc.) often require a matching regional IP.
+          </p>
+          <p className="mt-1">
+            <strong>Solution:</strong> Turn on a VPN (set to USA, UK, or your target citation country) or enable <strong>Cloudflare WARP (1.1.1.1)</strong> before blasting.
+          </p>
+        </div>
+
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <Btn onClick={startBlast} disabled={running || !business || selected.length === 0} className="!px-6 !py-3 text-base">
             <Rocket size={18} /> START AUTO BLAST — Open {settings.tabs_at_once} Tabs at Once
