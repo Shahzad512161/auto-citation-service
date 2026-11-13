@@ -16,6 +16,7 @@ export default function BlasterPage() {
   const [opened, setOpened] = useState(0);
   const [log, setLog] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
   const stopRef = useRef(false);
 
   useEffect(() => {
@@ -38,17 +39,26 @@ export default function BlasterPage() {
     // Spec: business data saved to localStorage under this exact key.
     localStorage.setItem("blaster_business_data", JSON.stringify(business));
     stopRef.current = false;
+    setPopupBlocked(false);
     setRunning(true); setOpened(0); setLog([]);
     const chosen = dirs.filter((d) => selected.includes(d.id));
     const batch = settings.tabs_at_once;
     const delay = settings.delay_seconds * 1000;
     let done = 0;
+    let blockedDetected = false;
     const subs = getSubmissions();
     for (let i = 0; i < chosen.length; i += batch) {
       if (stopRef.current) break;
       const chunk = chosen.slice(i, i + batch);
       chunk.forEach((d) => {
-        window.open(d.add_url, "_blank", "noopener");
+        try {
+          const win = window.open(d.add_url, "_blank", "noopener");
+          if (!win || win.closed || typeof win.closed === "undefined") {
+            blockedDetected = true;
+          }
+        } catch {
+          blockedDetected = true;
+        }
         subs.push({ id: uid(), user_id: user?.id || "demo", business_id: business.id, business_name: business.name, directory_id: d.id, directory_name: d.name, country, date: new Date().toISOString(), status: "pending", live_url: "" });
         setLog((l) => [...l, `Opened: ${d.name} → ${d.add_url}`]);
       });
@@ -58,10 +68,14 @@ export default function BlasterPage() {
       const sub = getSubscription();
       sub.listings_used = (sub.listings_used || 0) + chunk.length;
       save("cb_subscription", sub);
+      if (blockedDetected) {
+        setPopupBlocked(true);
+      }
       if (i + batch < chosen.length) await sleep(delay);
     }
     setRunning(false);
-    setLog((l) => [...l, stopRef.current ? "Blast stopped by you." : `Done: ${done} tabs opened. Each directory form must be reviewed and submitted by you — use the bookmarklet below to auto-fill it.`]);
+    if (blockedDetected) setPopupBlocked(true);
+    setLog((l) => [...l, stopRef.current ? "Blast stopped by you." : `Done: ${done} tabs requested. Check if your browser blocked additional tabs.`]);
   }
 
   return (
@@ -135,6 +149,32 @@ export default function BlasterPage() {
           </Btn>
           {running && <Btn variant="danger" onClick={() => { stopRef.current = true; }}>Stop</Btn>}
         </div>
+
+        {popupBlocked && (
+          <div className="mt-4 rounded-xl border-2 border-red-500 bg-red-50 p-4 text-sm text-red-900 shadow-md">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl">🚫</span>
+              <div className="space-y-2">
+                <h3 className="font-bold text-base text-red-800">
+                  Chrome Blocked Multiple Tabs from Opening!
+                </h3>
+                <p className="text-sm text-red-700">
+                  By default, browsers only permit 1 pop-up tab per click to prevent spam. That is why only 1 tab opened.
+                </p>
+                <div className="rounded-lg bg-white p-3 border border-red-200">
+                  <p className="font-semibold text-xs text-gray-900 mb-1">To allow all {selected.length} tabs to open automatically:</p>
+                  <ol className="list-decimal pl-5 space-y-1 text-xs text-gray-700">
+                    <li>Look at the <strong>far-right end of your Chrome address bar (URL bar)</strong> at the top of the browser.</li>
+                    <li>Click the <strong>Pop-up Blocked icon</strong> (a tiny window with a red &times; mark).</li>
+                    <li>Select <strong>&ldquo;Always allow pop-ups and redirects from http://localhost:3000&rdquo;</strong>.</li>
+                    <li>Click <strong>Done</strong>, then click the blue <strong>START AUTO BLAST</strong> button again!</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {(running || opened > 0) && (
           <div className="mt-4">
             <Progress value={opened} total={selected.length} />
@@ -146,6 +186,30 @@ export default function BlasterPage() {
             {log.map((l, i) => <p key={i}>{l}</p>)}
           </div>
         )}
+
+        {selected.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h3 className="text-sm font-bold text-gray-800 mb-2">
+              Selected Directories Queue ({selected.length}) — Click to open individually anytime:
+            </h3>
+            <div className="max-h-52 overflow-y-auto divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
+              {dirs.filter((d) => selected.includes(d.id)).map((d, idx) => (
+                <div key={d.id} className="flex items-center justify-between px-3 py-2 text-xs hover:bg-gray-50">
+                  <span className="font-medium text-gray-800 truncate mr-2">{idx + 1}. {d.name} <span className="text-gray-400 font-normal">({d.country})</span></span>
+                  <a
+                    href={d.add_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 rounded bg-blue-50 px-2.5 py-1 font-semibold text-[#0F6FFF] hover:bg-blue-100 transition"
+                  >
+                    Open Tab &rarr;
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p className="mt-3 text-xs text-gray-400">
           Browsers block silent pop-ups: allow pop-ups for this site, or the tabs will be blocked. Submissions are created as “Pending” in Reports — mark one “Live” there once the directory publishes it, and paste its live URL.
         </p>
