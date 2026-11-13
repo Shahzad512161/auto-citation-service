@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Zap, LayoutDashboard, Building2, Globe2, Rocket, BarChart3, CreditCard, Settings, LogOut, BadgeCheck, ScanSearch, TrendingUp } from "lucide-react";
-import { NavLink, Badge } from "../../components/ui";
+import { NavLink, Badge, DashboardSkeleton } from "../../components/ui";
 import { getUser, signOut, initials } from "../../lib/auth";
 import { syncFromFirestore } from "../../lib/store";
 
@@ -38,7 +38,7 @@ export default function DashboardLayout({ children }) {
     return () => window.removeEventListener("cb-user-changed", onChange);
   }, [router]);
 
-  if (!ready) return <main className="flex min-h-screen items-center justify-center text-sm text-gray-500">Loading…</main>;
+  if (!ready) return <DashboardSkeleton />;
   if (!user) return null;
 
   return (
