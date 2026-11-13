@@ -21,7 +21,7 @@ const NAV = [
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(getUser);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,8 @@ export default function DashboardLayout({ children }) {
     return () => window.removeEventListener("cb-user-changed", onChange);
   }, [router]);
 
-  if (!ready || !user) return <DashboardSkeleton />;
+  if (!ready && !user) return <DashboardSkeleton />;
+  if (!user) return <DashboardSkeleton />;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
