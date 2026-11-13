@@ -146,10 +146,31 @@
     }
   });
 
+  // Notify web app that the Citation Blaster Extension is installed and active
+  try {
+    window.postMessage({ type: "BLASTER_EXTENSION_INSTALLED", version: "1.2.0" }, "*");
+  } catch {}
+
   // Also listen for window events from the web app
   window.addEventListener("message", (e) => {
+    if (e.data?.type === "BLASTER_PING_EXTENSION") {
+      window.postMessage({ type: "BLASTER_EXTENSION_INSTALLED", version: "1.2.0" }, "*");
+    }
     if (e.data?.type === "BLASTER_SYNC_DATA") {
       chrome.storage?.local?.set({ active_business: e.data.payload });
+    }
+    // High-speed bulk URL opener: opens 100+ tabs in 1 click without popup blocker
+    if (e.data?.type === "BLASTER_OPEN_ALL_TABS" && Array.isArray(e.data?.urls)) {
+      try {
+        chrome.runtime?.sendMessage({
+          action: "OPEN_ALL_TABS",
+          urls: e.data.urls,
+        }, (res) => {
+          window.postMessage({ type: "BLASTER_TABS_OPENED", count: res?.count || e.data.urls.length }, "*");
+        });
+      } catch (err) {
+        console.error("Citation Blaster extension error:", err);
+      }
     }
   });
 })();

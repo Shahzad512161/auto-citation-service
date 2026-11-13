@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Rocket, Copy, Check, Bookmark } from "lucide-react";
-import { Btn, Card, Field, inputCls, Progress, Badge } from "../../../components/ui";
+import { Btn, Card, Field, inputCls, Progress, Badge, Modal } from "../../../components/ui";
 import { COUNTRIES, getBusinesses, getDirectories, getSubmissions, save, getSubscription, getSettings, uid } from "../../../lib/store";
 import { getUser } from "../../../lib/auth";
 import { buildBookmarklet } from "../../../lib/bookmarklet";
@@ -20,7 +20,32 @@ export default function BlasterPage() {
   const [gateway, setGateway] = useState("unblock"); // "unblock" (No VPN needed via Cloud Gateway) | "direct"
   const [stepperActive, setStepperActive] = useState(false);
   const [stepperIndex, setStepperIndex] = useState(0);
+  const [hasExtension, setHasExtension] = useState(false);
+  const [extVersion, setExtVersion] = useState("");
+  const [extModalOpen, setExtModalOpen] = useState(false);
   const stopRef = useRef(false);
+
+  useEffect(() => {
+    function handleMsg(e) {
+      if (e.data?.type === "BLASTER_EXTENSION_INSTALLED") {
+        setHasExtension(true);
+        if (e.data.version) setExtVersion(e.data.version);
+      }
+      if (e.data?.type === "BLASTER_TABS_OPENED") {
+        setLog((l) => [...l, `🚀 Extension successfully opened all ${e.data.count} tabs simultaneously!`]);
+      }
+    }
+    window.addEventListener("message", handleMsg);
+    // Ping extension
+    window.postMessage({ type: "BLASTER_PING_EXTENSION" }, "*");
+    const timer = setInterval(() => {
+      window.postMessage({ type: "BLASTER_PING_EXTENSION" }, "*");
+    }, 1500);
+    return () => {
+      window.removeEventListener("message", handleMsg);
+      clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     setBusinesses(getBusinesses());
@@ -111,6 +136,38 @@ export default function BlasterPage() {
     setPopupBlocked(false);
     setRunning(true); setOpened(0); setLog([]);
     const chosen = dirs.filter((d) => selected.includes(d.id));
+    const urls = chosen.map((d) => formatOpenUrl(d.add_url));
+
+    // 1. Dispatch event to Chrome Extension (if installed, it opens all 100+ tabs in 1 instant background batch)
+    window.postMessage({ type: "BLASTER_OPEN_ALL_TABS", urls }, "*");
+
+    if (hasExtension) {
+      const subs = getSubmissions();
+      chosen.forEach((d) => {
+        subs.push({
+          id: uid(),
+          user_id: user?.id || "demo",
+          business_id: business.id,
+          business_name: business.name,
+          directory_id: d.id,
+          directory_name: d.name,
+          country,
+          date: new Date().toISOString(),
+          status: "pending",
+          live_url: "",
+        });
+        setLog((l) => [...l, `Opened (via Extension): ${d.name} → ${d.add_url}`]);
+      });
+      setOpened(chosen.length);
+      save("cb_submissions", subs);
+      const sub = getSubscription();
+      sub.listings_used = (sub.listings_used || 0) + chosen.length;
+      save("cb_subscription", sub);
+      setRunning(false);
+      return;
+    }
+
+    // 2. Direct Web Fallback (opens tabs in loop)
     const batch = settings.tabs_at_once;
     const delay = settings.delay_seconds * 1000;
     let done = 0;
@@ -244,6 +301,40 @@ export default function BlasterPage() {
             <p className="mt-0.5">
               Your browser will connect directly to directory domains. If your ISP shows <strong>&ldquo;Blocked By TLC&rdquo;</strong>, switch to <strong>Auto-Unblock</strong> mode above or turn on a VPN.
             </p>
+          </div>
+        )}
+
+        {hasExtension ? (
+          <div className="mt-3 rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-xs text-emerald-950 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-black text-xs">✓</span>
+              <div>
+                <p className="font-extrabold text-emerald-900 text-xs">Chrome Extension Connected (Tabs Engine v{extVersion || "1.2"})</p>
+                <p className="text-emerald-700 text-[11px]">All {selected.length} tabs will open simultaneously with ZERO pop-up blocker restrictions!</p>
+              </div>
+            </div>
+            <Badge tone="green">100+ Tabs Allowed</Badge>
+          </div>
+        ) : (
+          <div className="mt-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50/40 p-3 text-xs shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="font-bold text-gray-900 flex items-center gap-1.5">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-[#0F6FFF] text-white font-mono text-[10px] font-black">EXT</span>
+                  Want all 100+ tabs to open in 1 instant click like other extensions?
+                </p>
+                <p className="text-gray-500 text-[11px] mt-0.5">
+                  Load your built-in extension in <code className="bg-white border px-1 rounded font-mono">public/extension</code> into Chrome to bypass all browser tab limitations!
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExtModalOpen(true)}
+                className="rounded-lg bg-[#0F6FFF] px-3 py-1.5 font-bold text-white hover:bg-blue-700 transition shadow-2xs text-xs"
+              >
+                Connect Extension (10s Setup) &rarr;
+              </button>
+            </div>
           </div>
         )}
 
@@ -420,6 +511,31 @@ export default function BlasterPage() {
           <p className="mt-3 text-sm text-amber-700">Select a business in Step 1 to generate its bookmarklet.</p>
         )}
       </Card>
+
+      <Modal open={extModalOpen} onClose={() => setExtModalOpen(false)} title="Connect Chrome Extension (Open 100+ Tabs at Once)">
+        <div className="space-y-4 text-sm text-gray-700">
+          <p>
+            Standard web browsers block multiple tabs when opened by a normal website. However, <strong>Chrome Extensions</strong> have native access to the <code>chrome.tabs.create</code> API, which can open <strong>100+ tabs simultaneously in 1 click with ZERO pop-up restrictions</strong>!
+          </p>
+          <div className="rounded-xl bg-gray-50 p-4 border border-gray-200 space-y-2 text-xs">
+            <p className="font-bold text-gray-900 text-sm">How to load your extension into Chrome (Takes 10 seconds):</p>
+            <ol className="list-decimal pl-5 space-y-2 text-xs text-gray-700">
+              <li>Open a new tab in Chrome and go to: <code className="bg-white px-2 py-0.5 border rounded font-mono font-bold text-blue-600">chrome://extensions</code></li>
+              <li>Toggle <strong>&ldquo;Developer mode&rdquo;</strong> in the top-right corner to <strong>ON</strong>.</li>
+              <li>Click the <strong>&ldquo;Load unpacked&rdquo;</strong> button in the top-left corner.</li>
+              <li>Select your project&apos;s extension folder:
+                <div className="mt-1 font-mono bg-white border border-gray-300 p-2 rounded text-[11px] select-all font-bold text-gray-900 break-all">
+                  C:\Users\Shahzad Diyal\Downloads\Global-Citation-Auto-Blaster\public\extension
+                </div>
+              </li>
+              <li>That&apos;s it! Once loaded, this page automatically detects it and displays the green <strong>&ldquo;Chrome Extension Connected&rdquo;</strong> badge. Clicking &ldquo;START AUTO BLAST&rdquo; will open all 100+ tabs at once!</li>
+            </ol>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Btn onClick={() => setExtModalOpen(false)}>Done, Let&apos;s Blast</Btn>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
