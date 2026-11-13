@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html { scroll-behavior: smooth; }
+body { background: #fff; color: #111; }
+input, select, textarea { outline: none; }
+input:focus, select:focus, textarea:focus { border-color: #0F6FFF !important; box-shadow: 0 0 0 3px rgba(15,111,255,.15); }
+@media print { .no-print { display: none !important; } }
