@@ -68,8 +68,8 @@ export default function SettingsPage() {
 
       <Card className="space-y-3 p-5">
         <h2 className="flex items-center gap-2 font-bold"><ShieldCheck size={18} /> Account</h2>
-        <p className="text-sm text-gray-600">Signed in as <b>{user?.email}</b> {user?.provider === "google" ? "(Verified via Google)" : "(Verified via Email)"}. Supabase connected: <b>{isSupabaseConfigured ? "Yes" : "No — demo mode"}</b>.</p>
-        <p className="text-sm text-gray-600">In demo mode your businesses, directories, submissions and subscription live only in this browser&apos;s localStorage. With Supabase connected, run supabase/schema.sql and the same tables hold them under your Gmail user id.</p>
+        <p className="text-sm text-gray-600">Signed in as <b>{user?.email}</b> {user?.provider === "google" ? "(Verified via Google)" : "(Verified via Email)"}. Firebase connected: <b>{isFirebaseConfigured ? "Yes" : "No — demo mode"}</b>.</p>
+        <p className="text-sm text-gray-600">Your businesses, directories, submissions and subscription sync automatically to Firebase Firestore under your account.</p>
       </Card>
 
       <Card className="space-y-3 border-red-200 p-5">
