@@ -21,7 +21,7 @@ export default function DashboardHome() {
     });
     setSub(getSubscription());
   }, []);
-  const limit = sub ? planLimit(sub.plan) : 5;
+  const limit = sub ? planLimit(sub.plan) : 10000;
   const cards = [
     { label: "My Businesses", value: stats.businesses, icon: <Building2 size={20} />, href: "/dashboard/businesses" },
     { label: "Directories in library", value: stats.directories.toLocaleString(), icon: <Globe2 size={20} />, href: "/dashboard/directories" },

@@ -6,7 +6,7 @@ import { getSubscription, save, planLimit } from "../../../lib/store";
 import { getUser as getAuthUser } from "../../../lib/auth";
 
 const PLANS = [
-  { name: "Free Trial", price: 0, listings: 5, desc: "1 Business, 1 Country" },
+  { name: "Free Trial", price: 0, listings: 10000, desc: "Testing Mode: 10,000 Listings, All Countries" },
   { name: "Starter", price: 19, listings: 50, desc: "1 Business, 2 Countries, Custom Add" },
   { name: "Growth", price: 49, listings: 200, desc: "3 Businesses, All Countries, Reports", popular: true },
   { name: "Agency", price: 149, listings: 1000, desc: "20 Businesses, Unlimited, White Label, API" },
@@ -36,8 +36,8 @@ export default function SubscriptionPage() {
 
   function choose(plan) {
     if (plan.name === "Free Trial") {
-      const s = { ...sub, plan: "Free Trial", listings_limit: 5, status: "active" };
-      save("cb_subscription", s); setSub(s); setMsg("Free Trial activated.");
+      const s = { ...sub, plan: "Free Trial", listings_limit: 10000, status: "active" };
+      save("cb_subscription", s); setSub(s); setMsg("Free Trial activated (10,000 listings).");
       return;
     }
     setCheckout(plan);
