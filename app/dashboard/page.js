@@ -34,7 +34,7 @@ export default function DashboardHome() {
         <h1 className="text-2xl font-bold">Welcome back{user ? `, ${user.full_name.split(" ")[0]}` : ""} 👋</h1>
         <p className="text-sm text-gray-500">Add one business, pick directories country-wise, and blast it everywhere.</p>
       </div>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
           <Link key={c.label} href={c.href}><Card className="p-4 hover:shadow-md">
             <div className="flex items-center gap-2 text-[#0F6FFF]">{c.icon}<span className="text-xs font-semibold uppercase text-gray-500">{c.label}</span></div>
