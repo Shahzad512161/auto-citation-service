@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Zap, Mail, ShieldCheck } from "lucide-react";
 import { Btn, Card, inputCls } from "../components/ui";
+import BrandLogo from "../components/BrandLogo";
 import { isFirebaseConfigured } from "../lib/firebase";
 import { loginWithGoogle, demoGoogleLogin, emailSignIn, emailSignUp, sendOtp, verifyOtp } from "../lib/auth";
 
@@ -110,14 +111,8 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-10">
-      <div className="mb-6 flex items-center gap-2">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0F6FFF] text-white">
-          <Zap size={22} />
-        </span>
-        <div>
-          <p className="text-xl font-extrabold leading-none">Citation Blaster</p>
-          <p className="text-xs text-gray-500">One Business, 1000 Directories</p>
-        </div>
+      <div className="mb-6">
+        <BrandLogo size="lg" href="/" />
       </div>
 
       <Card className="w-full max-w-md p-6 sm:p-8">

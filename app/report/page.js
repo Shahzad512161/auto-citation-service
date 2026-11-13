@@ -3,6 +3,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShieldCheck, CheckCircle2, Clock, XCircle, ExternalLink, Download, Printer } from "lucide-react";
 import { Card, Badge, Btn, Skeleton } from "../../components/ui";
+import { LogoIcon } from "../../components/BrandLogo";
 import { getBusinesses, getSubmissions, getAgencyBranding } from "../../lib/store";
 
 function ReportViewer() {
@@ -45,9 +46,7 @@ function ReportViewer() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={agency.agency_logo} alt={agency.agency_name} className="h-9 max-w-[160px] object-contain" />
             ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0F6FFF] font-bold text-white">
-                {agency?.agency_name ? agency.agency_name[0] : "SEO"}
-              </span>
+              <LogoIcon size={36} />
             )}
             <div>
               <p className="font-extrabold text-sm sm:text-base leading-none">

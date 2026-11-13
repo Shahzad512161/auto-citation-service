@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Zap, LayoutDashboard, Building2, Globe2, Rocket, BarChart3, CreditCard, Settings, LogOut, BadgeCheck, ScanSearch, TrendingUp } from "lucide-react";
 import { NavLink, Badge, DashboardSkeleton } from "../../components/ui";
+import BrandLogo from "../../components/BrandLogo";
 import { getUser, signOut, initials } from "../../lib/auth";
 import { syncFromFirestore } from "../../lib/store";
 
@@ -44,12 +45,8 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-gray-200 bg-white p-4 md:flex">
-        <div className="mb-6 flex items-center gap-2 px-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0F6FFF] text-white"><Zap size={20} /></span>
-          <div>
-            <p className="font-extrabold leading-none">Citation Blaster</p>
-            <p className="text-[11px] text-gray-500">One Business, 1000 Directories</p>
-          </div>
+        <div className="mb-6 px-2">
+          <BrandLogo size="md" />
         </div>
         <nav className="space-y-1">
           {NAV.map((n) => (
